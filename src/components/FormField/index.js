@@ -7,13 +7,16 @@ function FormField({tag,label,value, onChange,type}){
         var x = (event.target).parentNode;
         x.classList.add("focussed")
     }
+    const idName = `id_${tag}${type}`;
     const TagC = tag ;
     return(
         <div className="field">
-          <label>
+          <label
+            htmlFor={idName}
+            >
             {label}
-            <TagC onClick={add} type={type} value={value} onChange={onChange}/>
           </label>
+          <TagC onClick={add} id={idName} type={type} value={value} onChange={onChange}/>
         </div>
     );
 }

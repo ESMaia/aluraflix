@@ -1,22 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PageDefault from '../../../components/PageDefault';
 import FormField from '../../../components/FormField';
+import './formStyle.css';
 
 function CadastroCategoria() {
   const valoresIniciais = {
     nome: '',
     descricao: '',
-    cor: '#000'
+    cor: ''
   }
-  function handleValues(chave,valor){
+  const [values, setValues] = useState(valoresIniciais);
+  const [categorias, setCategorias] = useState(['']);
+
+  function handleValues(chave, valor){
     setValues({
       ...values,
       [chave]: valor
     })
   }
-  const [values, setValues] = useState(valoresIniciais);
-  const [categorias, setCategorias] = useState(['']);
+
+  useEffect(()=>{
+    console.log("oi");
+    const url = window.location.hostname.includes('localhos')
+    ? 'http://localhost:8080/categorias'
+    : 'https://aluraflixm.herokuapp.com/categorias';  
+    fetch(url).then(async(response) => {
+      const resp = await response.json();
+      console.log(resp);
+      setCategorias([
+        ...resp
+      ]);
+    });
+  },[values]);
+
+
   return (
     <PageDefault>
       <h1>Cadastro de Categoria {values.nome}</h1>
@@ -52,15 +70,36 @@ function CadastroCategoria() {
           Cadastrar
         </button>
       </form>
-          <ul>
-            {categorias.map( (categoria, index) => {
-              return(
-                <li key={index}>Categoria:{categoria.nome}| Descrição: {categoria.descricao}| Cor:{categoria.cor}</li>
-              );
-            })}
-          </ul>
 
-      <Link to="/">
+      {categorias.length > 0 && (
+        
+        <table key={`key${categorias.length + 1}`}>
+            <thead key={`key${categorias.length + 2}`}>
+              <tr key={`key${categorias.length + 3}`}>
+                <th key={`key${categorias.length + 4}`}>Categoria</th>
+                {/* <th>Descrição</th>
+                <th>Cor</th> */}
+              </tr>
+            </thead>
+            <tbody key={`key${categorias.length + 5}`}>
+              {categorias.map( (categoria, index) => {
+                return(
+                  <tr key={`key${categoria.length}`}>
+                    <td key={`${index}${categoria.nome}`}>{categoria.nome}</td>
+                    {/* <td key={`${index}${categoria.descricao}`}>{categoria.descricao}</td>
+                    <td key={`${index}${categoria.cor}`}>{categoria.cor}</td> */}
+                  </tr>
+                  );
+                })}
+            </tbody>
+        </table>
+                
+      )
+
+      }
+
+
+      <Link className="btn" to="/">
         Ir para home
       </Link>
     </PageDefault>
