@@ -1,109 +1,156 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link,useHistory } from 'react-router-dom';
 import PageDefault from '../../../components/PageDefault';
 import FormField from '../../../components/FormField';
-import './formStyle.css';
+import ButtonLink from '../../../components/buttonLink';
+import useForm from '../../../hooks/useForm';
+import categoriasRepository from '../../../repositories/categorias';
+import './tableStyle.css'
 
 function CadastroCategoria() {
+  const history = useHistory();
   const valoresIniciais = {
-    nome: '',
+    titulo: '',
     descricao: '',
-    cor: ''
-  }
-  const [values, setValues] = useState(valoresIniciais);
-  const [categorias, setCategorias] = useState(['']);
+    cor: '#000000',
+    link_ex: '',
+  };
 
-  function handleValues(chave, valor){
-    setValues({
-      ...values,
-      [chave]: valor
-    })
-  }
+  const { handleChange, values, clearForm } = useForm(valoresIniciais);
 
-  useEffect(()=>{
-    console.log("oi");
-    const url = window.location.hostname.includes('localhos')
-    ? 'http://localhost:8080/categorias'
-    : 'https://aluraflixm.herokuapp.com/categorias';  
-    fetch(url).then(async(response) => {
-      const resp = await response.json();
-      console.log(resp);
-      setCategorias([
-        ...resp
-      ]);
-    });
-  },[values]);
+  const [categorias, setCategorias] = useState([]);
 
+  useEffect(() => {
+    const URL_CATEGORIAS = window.location.hostname.includes('localhost')
+      ? 'http://localhost:8080/categorias'
+      : 'https://devsoutinhoflix.herokuapp.com/categorias';
+    fetch(URL_CATEGORIAS)
+      .then(async (respostaDoServidor) => {
+        const resposta = await respostaDoServidor.json();
+        setCategorias([
+          ...resposta,
+        ]);
+      });
+  }, []);
 
   return (
     <PageDefault>
-      <h1>Cadastro de Categoria {values.nome}</h1>
-      <form onSubmit={ function handleSubmit(event){
-        event.preventDefault();
+      <h1>
+        Cadastro de Categoria:
+        {values.titulo}
+      </h1>
+
+      <form onSubmit={function handleSubmit(infosDoEvento) {
+        infosDoEvento.preventDefault();
         setCategorias([
           ...categorias,
-          values
+          values,
         ]);
-      }}>
+        categoriasRepository.create({
+          titulo: values.titulo,
+          cor: values.cor,
+          link_extra: {
+            text: values.descricao,
+            url: values.link_ex
+          }    
+        })
+          .then(() => {
+            history.push('/');
+          });
+        clearForm();
+      }}
+      >
 
-      <FormField
-        tag="input"
-        label="Nome da Categoria:"
-        type="text" 
-        value={values.nome} 
-        onChange={(event) => {handleValues("nome", event.target.value)}}/>
+        <FormField
+          label="Título da Categoria"
+          name="titulo"
+          value={values.titulo}
+          onChange={handleChange}
+        />
 
-      <FormField
-        tag="textarea"
-        label="Descrição da Categoria:"
-        type="text" 
-        value={values.descricao} 
-        onChange={(event) => {handleValues("descricao", event.target.value)}}/>
-      <FormField
-        tag="input"
-        label="Cor da Categoria:"
-        type="color" 
-        value={values.cor} 
-        onChange={(event) => {handleValues("cor", event.target.value)}}/>
-        
-        <button>
+        <FormField
+          label="Descrição"
+          type="textarea"
+          name="descricao"
+          value={values.descricao}
+          onChange={handleChange}
+        />
+        <FormField
+          label="Link de referência para a categoria"
+          type="input"
+          name="link_ex"
+          value={values.link_ex}
+          onChange={handleChange}
+        />
+
+        <FormField
+          label="Cor"
+          type="color"
+          name="cor"
+          value={values.cor}
+          onChange={handleChange}
+        />
+
+        <ButtonLink type="submit">
           Cadastrar
-        </button>
+        </ButtonLink>
       </form>
 
-      {categorias.length > 0 && (
-        
-        <table key={`key${categorias.length + 1}`}>
-            <thead key={`key${categorias.length + 2}`}>
-              <tr key={`key${categorias.length + 3}`}>
-                <th key={`key${categorias.length + 4}`}>Categoria</th>
-                {/* <th>Descrição</th>
-                <th>Cor</th> */}
-              </tr>
-            </thead>
-            <tbody key={`key${categorias.length + 5}`}>
-              {categorias.map( (categoria, index) => {
-                return(
-                  <tr key={`key${categoria.length}`}>
-                    <td key={`${index}${categoria.nome}`}>{categoria.nome}</td>
-                    {/* <td key={`${index}${categoria.descricao}`}>{categoria.descricao}</td>
-                    <td key={`${index}${categoria.cor}`}>{categoria.cor}</td> */}
-                  </tr>
-                  );
-                })}
-            </tbody>
-        </table>
+      {categorias.length === 0 && (
+        <div>
+          Loading...
+        </div>
+      )}
+
+      <table>
+      <thead>
+        <tr>
+          <th scope="col">Categoria</th>
+          <th scope="col">Descrição</th>
+          <th scope="col">Cor</th>
+          <th scope="col">Ações</th>
+        </tr>
+      </thead>
+        <tbody>
+          {categorias.map((categoria,index) => (
+          <tr  key={`key_${index}${categoria.titulo}`} >
+              <td key={`${categoria.titulo}`}>
+                {categoria.titulo}
+              </td>
+              {
+                categoria.link_extra && (
+                  <td key={`${categoria.titulo}${index}`}>
+                    {categoria.link_extra.text}
+                  </td>
+                )
+              }
+              {
+                categoria.link_extra === undefined && (
+                  <td key={`${categoria.titulo}${index}`}>
+                    Sem Descrição
+                  </td>
+                )
+              }
+              <td key={`${categoria.cor}`}>
+                {categoria.cor}
+              </td>
+              <td key={`${index}`}>
+                Ainda sendo desenvolvido
+                {/* <Link to="/">Editar</Link>
                 
-      )
+                <Link to="/">Excluir</Link> */}
+              </td>
+              
+          </tr>
+          ))}
+        </tbody>
+      </table>
 
-      }
-
-
-      <Link className="btn" to="/">
+      <ButtonLink as={Link} to="/">
         Ir para home
-      </Link>
+      </ButtonLink>
     </PageDefault>
-  )
+  );
 }
 
 export default CadastroCategoria;
